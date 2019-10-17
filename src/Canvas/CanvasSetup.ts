@@ -24,6 +24,9 @@ import Rotate2D from "./Controllers/Rotate2D";
 import SizeOverTime from "./Controllers/SizeOverTime";
 import TriangleState from "./Triangle/TriangleState";
 import TriangleRenderer from "./Triangle/TriangleRenderer";
+import TreeState from "./Tree/TreeState";
+import TreeRenderer from "./Tree/TreeRenderer";
+import RandomVelocity from "./Controllers/RandomVelocity";
 
 const overTimeFunctions = [
     (time: number, amount: number, offset: number) => Math.sin(time * 0.05 + offset * Math.PI * 2) * amount,
@@ -39,6 +42,15 @@ const blueColors = [
     new Color(89, 2, 50)
 ]
 
+const treeColors = [
+    new Color(242, 80, 169),
+    new Color(166, 41, 145),
+    new Color(115, 34, 101),
+    new Color(2, 94, 115),
+    new Color(3, 127, 140),
+    new Color(89, 204, 217),
+]
+
 
 const center = {x: window.innerWidth / 2, y: window.innerHeight / 2};
 const simplex = Noise.get();
@@ -50,45 +62,76 @@ export function CanvasSetup() {
 
 
     let particles:  BaseDrawable[] = (new Array(200)).fill(0).map(e => generateParticles({min: 0, max: window.innerWidth}, {min: 0, max: window.innerHeight}));
-    let bg:  BaseDrawable[] = (new Array(200)).fill(0).map(e => generateBg());
-    // let carousel:  BaseDrawable[] = (new Array(20)).fill(0).map((e, i, a) => generateCarousel(i / a.length));
+    let bg: BaseDrawable[] = (new Array(200)).fill(0).map(e => generateBg());
+    let trees: BaseDrawable[] = (new Array(80)).fill(0).map((e, i, a) => generateTree(i / a.length));
 
     const drawnObject = [
         new BaseDrawable(
             new RectangleState({
                 position: {x: window.innerWidth / 2, y: window.innerHeight / 2},
                 size: {width: window.innerWidth, height: window.innerHeight},
-                color: new Color(0, 0, 0, 0.5)
+                color: new Color(0, 0, 0, 1)
             }),
             new RectangleRenderer()
         ),
-        ...bg,
-        new BaseGenerator(
-            new BlackHolesGenerator()
-        ),
-        ...particles,
-        // ...carousel
+        ...trees
+        // ...bg,
+        // new BaseGenerator(
+        //     new BlackHolesGenerator()
+        // ),
+        // ...particles,
+
     ]
 
     return new Canvas(drawnObject, htmlCanvas, context);
 }
 
-function generateCarousel(progression: number) {
-    return new BaseDrawable(
-        new CircleState({
-            color: new Color(255, 255, 255),
-            size: 10,
-            position: {...center}
-        }),
-        new CircleRenderer(),
-        [],
-        [
-            new Rotate2D({
-                offset: progression,
-                amount: 200
-            })
-        ]
-    )
+function generateTree(progression: number) {
+    if (Math.random() > 0.8) {
+        return new BaseDrawable(
+            new TreeState({
+                color: treeColors[Math.floor(Math.random() * treeColors.length)],
+                iterations: 9,
+                size: 120,
+                position: {x: window.innerWidth * Math.random(), y: (window.innerHeight / 2) * progression + 50 + window.innerHeight / 2},
+                angle: Math.PI / 8
+            }),
+            new TreeRenderer()
+        )
+    } else {
+        return new BaseDrawable(
+            new PhysicCircleState({
+                size: 1.5,
+                color: new Color(255, 255, 255),
+                position: {x: window.innerWidth * Math.random(), y: (window.innerHeight / 2) * progression + window.innerHeight / 2},
+                velocity: {x: 0, y: 0},
+                acceleration: {x: 0, y: 0}
+            }),
+            new CircleStarRenderer(),
+            [],
+            [
+                new LoopInBox({
+                    horizontalInterval: {
+                        min: 0,
+                        max: window.innerWidth
+                    },
+                    verticalInterval: {
+                        min: 0,
+                        max: window.innerHeight
+                    }
+                }),
+                new SizeOverTime({
+                    offset: Math.random(),
+                    amount: 0.5,
+                    func: (time: number, amount: number, offset: number) => Math.sin(time * 0.01 + offset * Math.PI * 2) * amount
+                }),
+                new RandomVelocity(),
+                new PhysicUpdate({
+                    inertia: 0
+                })
+            ]
+        )
+    }
 }
 
 function generateParticles(horizontalInterval: Interval, verticalInterval: Interval) : BaseDrawable {
