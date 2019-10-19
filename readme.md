@@ -1,12 +1,3 @@
-# a minimalist startup kit
+# Generative Galaxy
 
-- editorconfig
-- webpack
-- babel
-- prettier
-
-# to do
-
-- eslint
-- flowjs / typescript
-- stylus
+Generative scene in canvas 2D
